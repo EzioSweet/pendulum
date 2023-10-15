@@ -1,0 +1,17 @@
+[[source]]
+url = "https://mirrors.sustech.edu.cn/pypi/simple"
+verify_ssl = true
+name = "pendulum"
+
+[packages]
+numpy = "*"
+matplotlib = "*"
+pyside2 = "*"
+pycairo = "*"
+libpython = "*"
+pyinstaller = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
