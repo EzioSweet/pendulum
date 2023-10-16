@@ -3,7 +3,7 @@ from matplotlib import figure
 import pendulum as pdm
 import numpy as np
 from PySide2.QtCore import QRect,QMetaObject,QCoreApplication,Slot
-from PySide2.QtWidgets import QWidget,QVBoxLayout,QLabel,QLineEdit,QPushButton,QApplication,QMainWindow,QStatusBar
+from PySide2.QtWidgets import QCheckBox, QWidget,QVBoxLayout,QLabel,QLineEdit,QPushButton,QApplication,QMainWindow,QStatusBar
 import sys
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -105,9 +105,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.step)
 
+        self.check = QCheckBox(self.centralwidget)
+        self.check.setObjectName(u"check")
+        self.check.setGeometry(530,380,70,41)
+
+        self.check2 = QCheckBox(self.centralwidget)
+        self.check2.setObjectName(u"check2")
+        self.check2.setGeometry(530,400,70,41)
         self.plot = QPushButton(self.centralwidget)
         self.plot.setObjectName(u"plot")
-        self.plot.setGeometry(QRect(530, 390, 171, 41))
+        self.plot.setGeometry(QRect(600, 390, 100, 41))
         self.plot.clicked.connect(self.draw)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QStatusBar(MainWindow)
@@ -117,6 +124,10 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
 
         QMetaObject.connectSlotsByName(MainWindow)
+        self.x1=[]
+        self.x2=[]
+        self.y1=[]
+        self.y2=[]
     # setupUi
 
     def retranslateUi(self, MainWindow):
@@ -135,10 +146,16 @@ class Ui_MainWindow(object):
         self.theta1line.setText("0.33")
         self.theta2line.setText("0")
         self.step.setText("0.001")
+        self.check.setText("轨迹")
+        self.check2.setText("拖影")
         self.plot.setText(QCoreApplication.translate("MainWindow", u"\u7ed8\u56fe", None))
     # retranslateUi
     @Slot()
     def draw(self):
+        self.x1=[]
+        self.y1=[]
+        self.x2=[]
+        self.y2=[]
         self.l1= float(self.l1line.text())
         self.l2= float(self.l2line.text())
         self.m1= float(self.m1line.text())
@@ -150,6 +167,8 @@ class Ui_MainWindow(object):
         self.dt = float(self.step.text())
         self.line1, = self.ax.plot([], [], 'o-', lw=2)
         self.line2, = self.ax.plot([], [], 'o-', lw=2)
+        self.line3, = self.ax.plot([],[],'-',lw=2)
+        self.line4, = self.ax.plot([],[],'-',lw=2)
         self.t = np.arange(0, 100, self.dt)
         self.theta1_list=[]
         self.theta2_list=[]
@@ -205,13 +224,22 @@ class Ui_MainWindow(object):
             self.ani=None
         self.ani = FuncAnimation(self.fig, self.animate,frames=len(self.t),interval=self.dt*1000, blit=True)
     def animate(self, j):
-        x1 = self.l1 * np.sin(self.theta1_list[j])
-        y1 = -self.l1 * np.cos(self.theta1_list[j])
-        x2 = x1 + self.l2 * np.sin(self.theta2_list[j])
-        y2 = y1 - self.l2 * np.cos(self.theta2_list[j])
-        self.line1.set_data([0,x1], [0,y1])
-        self.line2.set_data([x1,x2], [y1,y2])
-        return self.line1,self.line2
+        self.x1.append(self.l1 * np.sin(self.theta1_list[j]))
+        self.y1.append(-self.l1 * np.cos(self.theta1_list[j]))
+        self.x2.append(self.x1[j] + self.l2 * np.sin(self.theta2_list[j]))
+        self.y2.append(self.y1[j] - self.l2 * np.cos(self.theta2_list[j]))
+        self.line1.set_data([0,self.x1[j]], [0,self.y1[j]])
+        self.line2.set_data([self.x1[j],self.x2[j]], [self.y1[j],self.y2[j]])
+        if self.check.isChecked():
+            if self.check2.isChecked():
+                self.line3.set_data(self.x1[-200:],self.y1[-200:])
+                self.line4.set_data(self.x2[-200:],self.y2[-200:])
+            else:
+                self.line3.set_data(self.x1,self.y1)
+                self.line4.set_data(self.x2,self.y2)
+            return self.line1,self.line2,self.line3,self.line4
+        else:
+            return self.line1,self.line2
 if __name__ == "__main__":
     app = QApplication(sys.argv) 
     MainWindow = QMainWindow()    
